@@ -6,6 +6,7 @@ export default function gameServer(io) {
   const rooms = {};
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
+    socket.emit("connect", { message: "hello", status: "success" });
     // Create a new game room and notify the creator of game.
     socket.on("createGame", async (data) => {
       try {
@@ -19,19 +20,23 @@ export default function gameServer(io) {
           });
           socket.join(roomId);
           rooms[roomId] = { creator: socket, readyPlayer: 0 };
-          socket.emit("newGame", {
+          socket.emit("createGame", {
             message: "game created",
             status: "success",
             roomId: roomId,
           });
         } else {
-          socket.emit("error", {
+          socket.emit("createGame", {
             message: "no badge",
             status: "error",
           });
         }
       } catch (error) {
         console.error("Error creating game room:", error);
+        socket.emit("createGame", {
+          message: "server error",
+          status: "error",
+        });
       }
     });
     // socket.on("searchGame", async (data) => {
@@ -72,9 +77,9 @@ export default function gameServer(io) {
 
         //telling creator to wait
         if (visitorId == null) {
-          io.to(roomId).emit("wait", {
+          io.to(roomId).emit("waiting", {
             message: "player signing up",
-            status: "success",
+            status: "pending",
           });
           return;
         }
@@ -101,30 +106,46 @@ export default function gameServer(io) {
             creatorUniv: creator.univ,
             creatorWin: creator.wins,
             creatorTotal: creator.total,
+            creatirBadge: creator.myBadge,
           });
-          io.to(roomId).emit("playerJoin", {
+          io.to(roomId).emit("waiting", {
             message: "player joined the game",
             status: "success",
             visitorNickname: visitor.nickname,
             visitorUniv: visitor.univ,
             visitorWin: visitor.wins,
             visitorTotal: visitor.total,
-            visitorBadge:
-              visitor.univ == "korea" ? visitor.yonBadge : visitor.kuBadge,
+            visitorBadge: visitor.myBadge,
           });
           await room.save();
         } else {
-          socket.emit("error", { message: "Invalid room ID", status: "error" });
+          socket.emit("joinRoom", {
+            message: "Invalid room ID",
+            status: "error",
+          });
         }
       } catch (error) {
+        socket.emit("joinRoom", {
+          message: "server eroor",
+          status: "error",
+        });
         console.log("error", error);
       }
     });
     socket.on("startGame", async (data) => {
       try {
         const roomId = data.roomId;
-        if (rooms[roomId]) {
+        if (
+          rooms[roomId] &&
+          (rooms[roomId]["visitor"].id === socket.id ||
+            rooms[roomId]["creator"].id === socket.id)
+        ) {
           rooms[roomId]["readyPlayer"] += 1;
+        } else {
+          socket.emit("startGame", {
+            message: "socket id does not match",
+            socketId: socket.id,
+          });
         }
 
         if (rooms[roomId]["readyPlayer"] >= 2) {
@@ -133,21 +154,15 @@ export default function gameServer(io) {
               roomId: roomId,
             },
           });
-          const visitorId = data.visitorId;
-          if (visitorId == room.visitorId) {
-            io.to(roomId).emit("startGame", {
-              message: "start game",
-              state: "success",
-            });
-            if (!rooms[roomId]["block"]) {
-              rooms[roomId]["block"] = true;
-              startGame(roomId);
-            }
-          } else {
-            socket.emit("error", {
-              message: "no room",
-              status: "error",
-            });
+
+          io.to(roomId).emit("startGame", {
+            message: "start game",
+            state: "success",
+          });
+
+          if (!rooms[roomId]["block"]) {
+            rooms[roomId]["block"] = true;
+            startGame(roomId);
           }
         }
         //incase of not starting
@@ -156,13 +171,13 @@ export default function gameServer(io) {
             rooms[roomId]["block"] = true;
             startGame(roomId);
           }
-        });
+        }, 5000);
       } catch (error) {
         console.log("error", error);
       }
     });
 
-    socket.on("choose", async (data) => {
+    socket.on("choice", async (data) => {
       try {
         const roomId = data.roomId;
         const userId = data.userId;
@@ -178,11 +193,18 @@ export default function gameServer(io) {
           } else if (userId == room.visitor) {
             rooms[roomId]["visitorChoice"] = choice;
           } else {
-            socket.emit("error", { message: "who are you?", status: "error" });
+            socket.emit("choice", { message: "who are you?", status: "error" });
+            return;
           }
+          socket.emit("choice", {
+            message: "saved",
+            status: "success",
+            choice: choice,
+          });
         }
       } catch (error) {
         console.log("error", error);
+        socket.emit("choice", { message: "server error" });
       }
     });
   });
@@ -266,21 +288,11 @@ function handleWin(room, winner, winnerChoice) {
 
   //user badge
   if (room.civil) {
-    if (winner.univ == "korea") {
-      winner.kuBadge += 1;
-      loser.kuBadge -= 1;
-    } else {
-      winner.yonBadge += 1;
-      loser.yonBadge -= 1;
-    }
+    winner.myBadge += 1;
+    loser.myBadge -= 1;
   } else {
-    if (winner.univ == "korea") {
-      winner.yonBadge += 1;
-      loser.yonBadge -= 1;
-    } else {
-      winner.kuBadge += 1;
-      loser.kuBadge -= 1;
-    }
+    winner.getBadge += 1;
+    loser.getBadge -= 1;
     //univ badge
     winUniv = winner.getUniv();
     winUniv.badgeAmount += 1;
@@ -299,6 +311,7 @@ function deactivateRoom(rooms, room) {
   delete rooms[roomId];
   room.roomId = 0;
   room.save();
+  console.log("deactivated", rooms);
 }
 
 // function sendResults(room, rooms, io, winner) {

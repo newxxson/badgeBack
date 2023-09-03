@@ -22,11 +22,11 @@ User.initSchema = (sequelize, Univ) => {
           key: "univName",
         },
       },
-      kuBadge: {
+      myBadge: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
-      yonBadge: {
+      getBadge: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },

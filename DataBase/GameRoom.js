@@ -46,10 +46,8 @@ GameRoom.initSchema = (sequelize, User) => {
       sequelize,
       modelName: "GameRoom",
       tableName: "gameRoom",
-      timestamps: true, // Enables createdAt and updatedAt
-      createdAt: "createdAt", // Changes the default column name
+      timestamps: true,
+      createdAt: "createdAt",
     }
   );
 };
-
-// Create foreign key relationship

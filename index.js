@@ -7,6 +7,7 @@ import GameRoom from "./DataBase/GameRoom.js";
 import gameServer from "./views/gameServer.js";
 import gameStatistic from "./views/gameStatistic.js";
 import initializeDatabase from "./DataBase/DataBase.js";
+import checkAvailable from "./views/checkAvailable.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -18,9 +19,14 @@ const io = new Server(server, {
 
 gameServer(io);
 
-app.get("/statistic/:userId", (req, res) => {
+app.get("api/statistic/:userId", (req, res) => {
   const userId = req.params.userId;
   gameStatistic(req, res, userId);
+});
+
+app.get("api/check-available/:userId", (req, res) => {
+  const userId = req.params.userId;
+  checkAvailable(req, res, userId);
 });
 
 // Sync database and then start server
