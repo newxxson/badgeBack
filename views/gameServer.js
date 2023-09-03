@@ -6,24 +6,27 @@ export default function gameServer(io) {
   const rooms = {};
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-    socket.emit("connect", { message: "hello", status: "success" });
+
     // Create a new game room and notify the creator of game.
     socket.on("createGame", async (data) => {
       try {
-        const user = User.findByPk(data.userId);
-        const badge = user.univ == "korea" ? user.kuBadge : user.yonBadge;
+        const user = await User.findByPk(data.userId);
+        console.log("user", user.id);
+        const badge = user.myBadge;
         if (badge > 0) {
-          const roomId = createRoomId(Object.keys(rooms));
+          const roomId = createRoomId(rooms);
           const newRoom = await GameRoom.create({
             creatorId: data.userId,
             roomId: roomId,
           });
+          console.log(newRoom);
           socket.join(roomId);
           rooms[roomId] = { creator: socket, readyPlayer: 0 };
           socket.emit("createGame", {
             message: "game created",
             status: "success",
             roomId: roomId,
+            newRoom: newRoom,
           });
         } else {
           socket.emit("createGame", {
@@ -90,8 +93,8 @@ export default function gameServer(io) {
               roomId: roomId,
             },
           });
-          const visitor = await User.findByPk(data.userId);
-          const creator = room.getCreator();
+          const visitor = await User.findByPk(visitorId);
+          const creator = await User.findByPk(room.creatorId);
 
           //define room setting
           room.visitorId = visitor.id;
@@ -108,7 +111,9 @@ export default function gameServer(io) {
             creatorTotal: creator.total,
             creatirBadge: creator.myBadge,
           });
-          io.to(roomId).emit("waiting", {
+          console.log(rooms);
+          console.log(roomId);
+          rooms[roomId]["creator"].emit("waiting", {
             message: "player joined the game",
             status: "success",
             visitorNickname: visitor.nickname,
@@ -116,16 +121,27 @@ export default function gameServer(io) {
             visitorWin: visitor.wins,
             visitorTotal: visitor.total,
             visitorBadge: visitor.myBadge,
+            roomId: roomId,
+          });
+          rooms[roomId]["visitor"].emit("waiting", {
+            message: "player joined the game",
+            status: "success",
+            visitorNickname: visitor.nickname,
+            visitorUniv: visitor.univ,
+            visitorWin: visitor.wins,
+            visitorTotal: visitor.total,
+            visitorBadge: visitor.myBadge,
+            roomId: roomId,
           });
           await room.save();
         } else {
-          socket.emit("joinRoom", {
+          socket.emit("joinGame", {
             message: "Invalid room ID",
             status: "error",
           });
         }
       } catch (error) {
-        socket.emit("joinRoom", {
+        socket.emit("joinGame", {
           message: "server eroor",
           status: "error",
         });
@@ -207,6 +223,26 @@ export default function gameServer(io) {
         socket.emit("choice", { message: "server error" });
       }
     });
+    socket.on("deactivate", async (data) => {
+      const roomId = data.roomId;
+      const room = await GameRoom.findOne({
+        where: {
+          roomId: roomId,
+        },
+      });
+      if (room.creatorId == data.userId) {
+        rooms[roomId]["creator"].leave(roomId);
+        if (rooms[roomId]["visitor"]) rooms[roomId]["visitor"].leave(roomId);
+        delete rooms[roomId];
+        room.destroy();
+        socket.emit("deactivate", {
+          message: "room deactivated",
+          status: "success",
+        });
+      } else {
+        socket.emit("deactivate", { message: "unauthorized", status: "error" });
+      }
+    });
   });
 
   function startGame(roomId) {
@@ -245,11 +281,12 @@ export default function gameServer(io) {
   }
 }
 
-function createRoomId(roomKeys) {
+function createRoomId(room) {
   let roomId;
   do {
     roomId = Math.floor(Math.random() * 1000000);
-  } while (roomKeys.includes(roomId));
+  } while (room.hasOwnProperty(roomId));
+  console.log("createRoomId", roomId);
   return roomId;
 }
 
@@ -268,11 +305,11 @@ function chooseWinner(creatorChoice, visitorChoice) {
 
 function handleWin(room, winner, winnerChoice) {
   if (winner == "creator") {
-    winner = room.getCreator();
-    loser = room.getVisitor();
+    winner = User.findByPk(room.creatorId);
+    loser = User.findByPk(room.visitorId);
   } else {
-    winner = room.getVisitor();
-    loser = room.getCreator();
+    winner = User.findByPk(room.visitorId);
+    loser = User.findByPk(room.creatorId);
   }
   //record
   room.winnerId = winner.id;

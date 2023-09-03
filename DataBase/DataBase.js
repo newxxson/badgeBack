@@ -3,14 +3,14 @@ import Univ from "./Univ.js";
 import User from "./User.js";
 import GameRoom from "./GameRoom.js";
 
-export default async function initializeDatabase() {
-  const sequelize = new Sequelize("gbb_database", "postgres", "1234", {
-    host: "localhost",
-    port: 5432,
-    dialect: "postgres",
-    timezone: "Asia/Seoul",
-  });
+export const sequelize = new Sequelize("gbb_database", "postgres", "1234", {
+  host: "localhost",
+  port: 5432,
+  dialect: "postgres",
+  timezone: "Asia/Seoul",
+});
 
+export default async function initializeDatabase() {
   Univ.initSchema(sequelize);
   User.initSchema(sequelize, Univ);
   GameRoom.initSchema(sequelize, User);
