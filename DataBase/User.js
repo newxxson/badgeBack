@@ -1,6 +1,4 @@
 import { DataTypes, Model } from "sequelize";
-import sequelize from "./DataBase.js";
-import Univ from "./Univ.js";
 
 export default class User extends Model {}
 

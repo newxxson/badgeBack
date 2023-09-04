@@ -1,13 +1,13 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import sequelize from "./DataBase/DataBase.js";
-import User from "./DataBase/User.js";
-import GameRoom from "./DataBase/GameRoom.js";
-import gameServer from "./views/gameServer.js";
-import gameStatistic from "./views/gameStatistic.js";
+import gameServer from "./views/game/gameServer.js";
 import initializeDatabase from "./DataBase/DataBase.js";
-import checkAvailable from "./views/checkAvailable.js";
+import login from "./views/user/login.js";
+import signup from "./views/user/signup.js";
+import { config } from "dotenv";
+import gameUrl from "./views/game/urls.js";
+config();
 
 const app = express();
 const server = http.createServer(app);
@@ -17,17 +17,14 @@ const io = new Server(server, {
   },
 });
 
+//gameServer.js
 gameServer(io);
+//game/*
+gameUrl(app);
 
-app.get("api/statistic/:userId", (req, res) => {
-  const userId = req.params.userId;
-  gameStatistic(req, res, userId);
-});
-
-app.get("api/check-available/:userId", (req, res) => {
-  const userId = req.params.userId;
-  checkAvailable(req, res, userId);
-});
+//user
+app.post("api/user/login/", login);
+app.post("api/user/signup", signup);
 
 // Sync database and then start server
 initializeDatabase()

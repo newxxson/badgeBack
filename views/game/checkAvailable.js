@@ -1,4 +1,4 @@
-import User from "../DataBase/User.js";
+import User from "../../DataBase/User.js";
 
 export default async function checkAvailable(req, res, userId) {
   try {

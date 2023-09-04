@@ -1,6 +1,6 @@
-import GameRoom from "../DataBase/GameRoom.js";
-import Univ from "../DataBase/Univ.js";
-import User from "../DataBase/User.js";
+import GameRoom from "../../DataBase/GameRoom.js";
+import Univ from "../../DataBase/Univ.js";
+import User from "../../DataBase/User.js";
 
 export default function gameServer(io) {
   const rooms = {};
@@ -165,17 +165,10 @@ export default function gameServer(io) {
         }
 
         if (rooms[roomId]["readyPlayer"] >= 2) {
-          const room = await GameRoom.findOne({
-            where: {
-              roomId: roomId,
-            },
-          });
-
           io.to(roomId).emit("startGame", {
             message: "start game",
             state: "success",
           });
-
           if (!rooms[roomId]["block"]) {
             rooms[roomId]["block"] = true;
             startGame(roomId);
@@ -185,6 +178,10 @@ export default function gameServer(io) {
         setTimeout(() => {
           if (rooms[roomId]["readyPlayer"] < 2 && !rooms[roomId]["block"]) {
             rooms[roomId]["block"] = true;
+            io.to(roomId).emit("startGame", {
+              message: "start game",
+              state: "success",
+            });
             startGame(roomId);
           }
         }, 5000);
