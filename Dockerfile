@@ -1,26 +1,15 @@
-# Use the official Node.js image as the base image
-FROM node:18
-
-# Set the working directory inside the container
+# 의존성 설치
+FROM node:16-buster
 WORKDIR /app
+COPY package*.json ./ 
+RUN npm ci --only=production
 
+ENV NODE_ENV production
 
-# Copy package.json to the working directory
-COPY package.json ./
-
-# Copy package-lock.json to the working directory
-COPY package-lock.json ./
-
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code to the working directory
 COPY . .
 
-# Expose the port that your Express.js app will listen on
-EXPOSE 3000
-EXPOSE 443
+# node 이미지에 이미 "node"라는 사용자가 uid/gid 1000번으로 생성되어 있음
+USER node
 
-# Command to run the app
-CMD ["node", "./index.js"]
+EXPOSE 3000
+CMD ["npm", "start"]
