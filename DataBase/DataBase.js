@@ -4,8 +4,8 @@ import User from "./User.js";
 import GameRoom from "./GameRoom.js";
 import PhoneNum from "./PhoneNum.js";
 
-export const sequelize = new Sequelize("gbb_database", "postgres", "1234", {
-  host: "localhost",
+export const sequelize = new Sequelize("gbb_database", "root", "123456", {
+  host: "postgresql",
   port: 5432,
   dialect: "postgres",
   timezone: "Asia/Seoul",
