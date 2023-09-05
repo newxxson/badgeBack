@@ -28,7 +28,10 @@ export default async function initializeDatabase() {
 
   User.hasOne(PhoneNum, { as: "PhoneNum", foreignKey: "userId" });
   PhoneNum.belongsTo(User, { as: "User", foreignKey: "userId" });
-
+  await Univ.sync();
+  await User.sync();
+  await GameRoom.sync();
+  await PhoneNum.sync();
   await sequelize.sync();
   console.log("All models were synchronized successfully.");
 }

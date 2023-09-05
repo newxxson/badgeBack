@@ -17,14 +17,14 @@ GameRoom.initSchema = (sequelize, User) => {
         type: DataTypes.STRING,
         references: {
           model: User,
-          key: "id",
+          key: "userId",
         },
       },
       visitorId: {
         type: DataTypes.STRING,
         references: {
           model: User,
-          key: "id",
+          key: "userId",
         },
         allowNull: true,
       },
@@ -45,7 +45,7 @@ GameRoom.initSchema = (sequelize, User) => {
     {
       sequelize,
       modelName: "GameRoom",
-      tableName: "gameRoom",
+      tableName: "GameRoom",
       timestamps: true,
       createdAt: "createdAt",
     }

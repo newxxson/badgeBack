@@ -11,7 +11,7 @@ export default function gameServer(io) {
     socket.on("createGame", async (data) => {
       try {
         const user = await User.findByPk(data.userId);
-        console.log("user", user.id);
+        console.log("user", user.userId);
         const badge = user.myBadge;
         if (badge > 0) {
           const roomId = createRoomId(rooms);
@@ -93,11 +93,12 @@ export default function gameServer(io) {
               roomId: roomId,
             },
           });
+
           const visitor = await User.findByPk(visitorId);
           const creator = await User.findByPk(room.creatorId);
 
           //define room setting
-          room.visitorId = visitor.id;
+          room.visitorId = visitor.userId;
           room.civil = visitor.univ == creator.univ ? true : false;
 
           rooms[roomId]["visitor"] = socket;
@@ -113,7 +114,7 @@ export default function gameServer(io) {
           });
           console.log(rooms);
           console.log(roomId);
-          rooms[roomId]["creator"].emit("waiting", {
+          const data = {
             message: "player joined the game",
             status: "success",
             visitorNickname: visitor.nickname,
@@ -122,17 +123,22 @@ export default function gameServer(io) {
             visitorTotal: visitor.total,
             visitorBadge: visitor.myBadge,
             roomId: roomId,
-          });
-          rooms[roomId]["visitor"].emit("waiting", {
-            message: "player joined the game",
-            status: "success",
-            visitorNickname: visitor.nickname,
-            visitorUniv: visitor.univ,
-            visitorWin: visitor.wins,
-            visitorTotal: visitor.total,
-            visitorBadge: visitor.myBadge,
-            roomId: roomId,
-          });
+          };
+          broadcast(rooms[roomId], "waiting", data);
+
+          //auto start after visitor joins
+          setTimeout(() => {
+            if (rooms[roomId]["readyPlayer"] < 2 && !rooms[roomId]["block"]) {
+              rooms[roomId]["block"] = true;
+              const data = {
+                message: "start game",
+                state: "success",
+              };
+              broadcast(rooms[roomId], "startGame", data);
+              startGame(roomId);
+            }
+          }, 5500);
+
           await room.save();
         } else {
           socket.emit("joinGame", {
@@ -142,16 +148,18 @@ export default function gameServer(io) {
         }
       } catch (error) {
         socket.emit("joinGame", {
-          message: "server eroor",
+          message: "server error",
           status: "error",
         });
         console.log("error", error);
       }
     });
+
     socket.on("startGame", async (data) => {
       try {
         const roomId = data.roomId;
         if (
+          //check if user and room is valid
           rooms[roomId] &&
           (rooms[roomId]["visitor"].id === socket.id ||
             rooms[roomId]["creator"].id === socket.id)
@@ -162,29 +170,20 @@ export default function gameServer(io) {
             message: "socket id does not match",
             socketId: socket.id,
           });
+          return;
         }
 
         if (rooms[roomId]["readyPlayer"] >= 2) {
-          io.to(roomId).emit("startGame", {
+          const data = {
             message: "start game",
             state: "success",
-          });
+          };
+          broadcast(rooms[roomId], "startGame", data);
           if (!rooms[roomId]["block"]) {
             rooms[roomId]["block"] = true;
             startGame(roomId);
           }
         }
-        //incase of not starting
-        setTimeout(() => {
-          if (rooms[roomId]["readyPlayer"] < 2 && !rooms[roomId]["block"]) {
-            rooms[roomId]["block"] = true;
-            io.to(roomId).emit("startGame", {
-              message: "start game",
-              state: "success",
-            });
-            startGame(roomId);
-          }
-        }, 5000);
       } catch (error) {
         console.log("error", error);
       }
@@ -201,9 +200,9 @@ export default function gameServer(io) {
               roomId: roomId,
             },
           });
-          if (userId == room.creator) {
+          if (userId == room.creatorId) {
             rooms[roomId]["creatorChoice"] = choice;
-          } else if (userId == room.visitor) {
+          } else if (userId == room.visitorId) {
             rooms[roomId]["visitorChoice"] = choice;
           } else {
             socket.emit("choice", { message: "who are you?", status: "error" });
@@ -222,16 +221,21 @@ export default function gameServer(io) {
     });
     socket.on("deactivate", async (data) => {
       const roomId = data.roomId;
+      if (!rooms[roomId]) {
+        socket.emit("deactivate", {
+          message: "already deactivated",
+          status: "error",
+        });
+        console.log("already deactivated");
+        return;
+      }
       const room = await GameRoom.findOne({
         where: {
           roomId: roomId,
         },
       });
       if (room.creatorId == data.userId) {
-        rooms[roomId]["creator"].leave(roomId);
-        if (rooms[roomId]["visitor"]) rooms[roomId]["visitor"].leave(roomId);
-        delete rooms[roomId];
-        room.destroy();
+        deactivateRoom(rooms, room);
         socket.emit("deactivate", {
           message: "room deactivated",
           status: "success",
@@ -242,13 +246,13 @@ export default function gameServer(io) {
     });
   });
 
-  function startGame(roomId) {
-    const room = GameRoom.findOne({
+  async function startGame(roomId) {
+    const room = await GameRoom.findOne({
       where: {
         roomId: roomId,
       },
     });
-    setTimeout(() => {
+    setTimeout(async () => {
       const creatorChoice =
         rooms[roomId]["creatorChoice"] ||
         ["rock", "paper", "scissor"][Math.floor(Math.random() * 3)];
@@ -259,20 +263,21 @@ export default function gameServer(io) {
       // Calculate the winner (this is a simple example)
       const winner = chooseWinner(creatorChoice, visitorChoice);
       if (winner === "draw") {
-        io.to(roomId).emit("gameResult", {
+        const data = {
           message: "draw",
           status: "success",
-        });
+        };
+        broadcast(rooms[roomId], "gameResult", data);
         startGame(roomId);
       }
       const winnerChoice = winner == "creator" ? creatorChoice : visitorChoice;
-      io.to(room.roomId).emit("gameResult", {
+      broadcast(rooms[roomId], "gameResult", {
         message: "game ended",
         status: "success",
         winner: winner,
         winnerChoice: winnerChoice,
       });
-      handleWin(room, winner, winnerChoice);
+      const result = await handleWin(room, winner, winnerChoice);
       deactivateRoom(rooms, room);
     }, 5500);
   }
@@ -300,16 +305,20 @@ function chooseWinner(creatorChoice, visitorChoice) {
   return "visitor";
 }
 
-function handleWin(room, winner, winnerChoice) {
-  if (winner == "creator") {
-    winner = User.findByPk(room.creatorId);
-    loser = User.findByPk(room.visitorId);
+async function handleWin(room, winnerIs, winnerChoice) {
+  let winner;
+  let loser;
+  let winUniv;
+  console.log("room", room);
+  if (winnerIs == "creator") {
+    winner = await User.findByPk(room.creatorId);
+    loser = await User.findByPk(room.visitorId);
   } else {
-    winner = User.findByPk(room.visitorId);
-    loser = User.findByPk(room.creatorId);
+    winner = await User.findByPk(room.visitorId);
+    loser = await User.findByPk(room.creatorId);
   }
   //record
-  room.winnerId = winner.id;
+  room.winnerId = winner.userId;
   room.winMethod = winnerChoice;
   //statistics
   winner.wins += 1;
@@ -326,22 +335,22 @@ function handleWin(room, winner, winnerChoice) {
     loser.myBadge -= 1;
   } else {
     winner.getBadge += 1;
-    loser.getBadge -= 1;
+    loser.myBadge -= 1;
     //univ badge
-    winUniv = winner.getUniv();
+    winUniv = await Univ.findByPk(winner.univ);
     winUniv.badgeAmount += 1;
   }
   //save
-  room.save();
-  winner.save();
-  loser.save();
-  winUniv.save();
+  await room.save();
+  await winner.save();
+  await loser.save();
+  await winUniv.save();
 }
 
 function deactivateRoom(rooms, room) {
   const roomId = room.roomId;
-  rooms[roomId]["creator"].leave(roomId);
-  rooms[roomId]["visitor"].leave(roomId);
+  if (rooms[roomId]["creator"]) rooms[roomId]["creator"].leave(roomId);
+  if (rooms[roomId]["visitor"]) rooms[roomId]["visitor"].leave(roomId);
   delete rooms[roomId];
   room.roomId = 0;
   room.save();
@@ -363,3 +372,8 @@ function deactivateRoom(rooms, room) {
 //     })
 //   }
 // }
+
+function broadcast(room, subject, data) {
+  room["creator"].emit(subject, data);
+  room["visitor"].emit(subject, data);
+}

@@ -4,8 +4,8 @@ import { generateAccessToken } from "./token.js";
 
 export default async function signup(req, res) {
   try {
+    console.log("user sign up ", req.body);
     const { userId, nickname, password, univ } = req.body;
-
     // Check if the userId or nick already exists in the database
     const existingId = await User.findOne({
       where: {
@@ -35,8 +35,10 @@ export default async function signup(req, res) {
     });
 
     const token = generateAccessToken(user);
-
-    res.status(201).json({ message: "User created successfully", token: user });
+    console.log("created User", token);
+    res
+      .status(201)
+      .json({ message: "User created successfully", token: token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });

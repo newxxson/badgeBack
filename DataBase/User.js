@@ -5,13 +5,17 @@ export default class User extends Model {}
 User.initSchema = (sequelize, Univ) => {
   User.init(
     {
-      id: {
+      userId: {
         type: DataTypes.STRING,
         primaryKey: true,
       },
       nickname: {
         type: DataTypes.STRING,
         unique: true,
+      },
+      password: {
+        type: DataTypes.STRING(70),
+        allowNull: false,
       },
       univ: {
         type: DataTypes.STRING,

@@ -8,7 +8,7 @@ PhoneNum.initSchema = (sequelize, User) => {
         type: DataTypes.STRING,
         references: {
           model: User,
-          key: "id",
+          key: "userId",
         },
         allowNull: false,
         primaryKey: true,
