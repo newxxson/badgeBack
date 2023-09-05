@@ -1,5 +1,7 @@
 # 의존성 설치
 FROM node:16-buster
+
+RUN mkdir -p /app
 WORKDIR /app
 COPY package*.json ./ 
 RUN npm ci --only=production
