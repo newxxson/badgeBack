@@ -85,7 +85,7 @@ export async function getRanker(req, res, userId) {
       { type: sequelize.QueryTypes.SELECT }
     );
     res.setHeader("Content-Type", "application/json");
-    res.status(200).json({ rankers: rankers, myRank: myRank });
+    res.status(200).json({ rankers: rankers, myRank: myRank[0].rank });
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ message: "internal server error" });
@@ -125,7 +125,7 @@ export async function getRecord(req, res, userId) {
       paperNum,
       scissorNum,
       losers: losers,
-      myRank: myRank.rank,
+      myRank: myRank[0].rank,
     });
   } catch (error) {
     console.log("error", error);

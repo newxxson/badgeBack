@@ -41,4 +41,10 @@ export default function setGameUrl(app) {
     const userId = req.user.userId;
     getRecord(req, res, userId);
   });
+
+  //add gaming
+  app.get("/api/game/join-game/:gameId", (req, res) => {
+    const gameId = req.params.gameId;
+    res.status(200).json({ message: "hello", gameId });
+  });
 }

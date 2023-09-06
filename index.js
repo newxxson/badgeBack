@@ -37,7 +37,7 @@ app.post("/api/user/signup/", (req, res) => {
 initializeDatabase()
   .then(() => {
     server.listen(3000, () => {
-      console.log("Server is running on http://localhost:3000");
+      console.log("Server is running");
     });
   })
   .then(() => {
