@@ -135,13 +135,11 @@ export async function getRecord(req, res, userId) {
 
 async function findLosers(userId) {
   const [asCreator, metaData] = await sequelize.query(
-    `SELECT "User"."nickname", "User"."univ" FROM "GameRoom" JOIN "User" ON "GameRoom"."visitorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
+    `SELECT "User"."nickname", "User"."univ", "GameRoom"."winMetod" FROM "GameRoom" JOIN "User" ON "GameRoom"."visitorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
   );
   const [asVisitor, dd] = await sequelize.query(
-    `SELECT "User"."nickname", "User"."univ" FROM "GameRoom" JOIN "User" ON "GameRoom"."creatorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
+    `SELECT "User"."nickname", "User"."univ", "GameRoom"."winMetod" FROM "GameRoom" JOIN "User" ON "GameRoom"."creatorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
   );
-  console.log("cr", asCreator);
-  console.log("us", asVisitor);
   const mergedArray = [...asCreator, ...asVisitor];
 
   return mergedArray;

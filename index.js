@@ -6,7 +6,10 @@ import { Server } from "socket.io";
 import gameServer from "./views/game/gameServer.js";
 import initializeDatabase from "./DataBase/DataBase.js";
 import setGameUrl from "./views/game/urls.js";
+import login from "./views/user/login.js";
+import signup from "./views/user/signup.js";
 import { sign } from "crypto";
+import cors from "cors";
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +19,7 @@ const io = new Server(server, {
   },
 });
 app.use(express.json());
+app.use(cors());
 //gameServer.js
 gameServer(io);
 //game/*
@@ -42,6 +46,3 @@ initializeDatabase()
   .catch((e) => {
     console.log(e);
   });
-
-import login from "./views/user/login.js";
-import signup from "./views/user/signup.js";
