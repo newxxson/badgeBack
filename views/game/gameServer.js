@@ -1,7 +1,7 @@
 import GameRoom from "../../DataBase/GameRoom.js";
 import Univ from "../../DataBase/Univ.js";
 import User from "../../DataBase/User.js";
-import makeQrCode from "./makeQrCode.cjs/";
+import makeQrCode from "./makeQr.cjs";
 
 export default function gameServer(io) {
   const rooms = {};
