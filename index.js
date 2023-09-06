@@ -10,6 +10,8 @@ import login from "./views/user/login.js";
 import signup from "./views/user/signup.js";
 import { sign } from "crypto";
 import cors from "cors";
+import { authenticateToken } from "./views/user/token.js";
+import phoneNum from "./views/user/phoneNum.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -17,8 +19,9 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://127.0.0.1:3000",
-      "http:localhost:3000",
-      "http:localhost:5500",
+      "http://localhost:3000",
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
       "*",
     ], // Set your client's origin here
     methods: ["GET", "POST"],
@@ -38,6 +41,10 @@ app.post("/api/user/login/", (req, res) => {
 });
 app.post("/api/user/signup/", (req, res) => {
   signup(req, res);
+});
+app.post("/api/user/phone-num/", authenticateToken, (req, res) => {
+  const userId = req.user.userId;
+  phoneNum(req, res, userId);
 });
 
 // Sync database and then start server
