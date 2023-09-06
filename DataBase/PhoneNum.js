@@ -16,6 +16,10 @@ PhoneNum.initSchema = (sequelize, User) => {
       phoneNum: {
         type: DataTypes.STRING,
       },
+      amount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+      },
     },
     {
       sequelize,

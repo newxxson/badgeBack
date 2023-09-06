@@ -1,7 +1,7 @@
 import PhoneNum from "../../DataBase/PhoneNum.js";
 import User from "../../DataBase/User.js";
 
-export default async function phoneNum(req, res, userId) {
+export async function phoneNum(req, res, userId) {
   try {
     console.log(req);
     const { phoneNum } = req.body;
@@ -11,6 +11,9 @@ export default async function phoneNum(req, res, userId) {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+    if (user.getBadge < 15) {
+      return res.status(400).json({ message: "not enough getBadge" });
     }
     //check out whether user in database or not
 
@@ -22,6 +25,10 @@ export default async function phoneNum(req, res, userId) {
     if (!uncreated) {
       // If the record already existed, update the phoneNum.
       phoneNumRecord.phoneNum = phoneNum;
+      phoneNumRecord.amount += 1;
+      user.getBadge -= 15;
+
+      await user.save();
       await phoneNumRecord.save();
       return res
         .status(200)
@@ -30,6 +37,20 @@ export default async function phoneNum(req, res, userId) {
       return res
         .status(201)
         .json({ message: "Phone number created successfully" });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function getPhoneNumAmount(req, res, userId) {
+  try {
+    const phoneNum = await PhoneNum.findByPk(userId);
+    if (phoneNum) {
+      return res.status(200).json({ amount: phoneNum.amount });
+    } else {
+      return res.status(200).json({ amount: 0 });
     }
   } catch (error) {
     console.error(error);

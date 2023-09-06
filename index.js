@@ -11,7 +11,7 @@ import signup from "./views/user/signup.js";
 import { sign } from "crypto";
 import cors from "cors";
 import { authenticateToken } from "./views/user/token.js";
-import phoneNum from "./views/user/phoneNum.js";
+import { phoneNum, getPhoneNumAmount } from "./views/user/phoneNum.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -45,6 +45,10 @@ app.post("/api/user/signup/", (req, res) => {
 app.post("/api/user/phone-num/", authenticateToken, (req, res) => {
   const userId = req.user.userId;
   phoneNum(req, res, userId);
+});
+app.get("/api/user/get-phone-num-amount/", authenticateToken, (req, res) => {
+  const userId = req.user.userId;
+  getPhoneNumAmount(req, res, userId);
 });
 
 // Sync database and then start server
