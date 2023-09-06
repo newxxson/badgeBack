@@ -105,7 +105,7 @@ export async function getBadge(req, res, userId) {
 export async function getRecord(req, res, userId) {
   try {
     const user = await User.findByPk(userId);
-    const { nickname, wins, total, rockNum, paperNum, scissorNum } = user;
+    const { nickname, wins, total, rockNum, paperNum, scissorNum, univ } = user;
     const losers = await findLosers(userId);
     const myRank = await sequelize.query(
       `SELECT
@@ -118,6 +118,7 @@ export async function getRecord(req, res, userId) {
     );
     res.status(200).json({
       nickname,
+      univ,
       wins,
       total,
       rockNum,
@@ -135,10 +136,10 @@ export async function getRecord(req, res, userId) {
 
 async function findLosers(userId) {
   const [asCreator, metaData] = await sequelize.query(
-    `SELECT "User"."nickname", "User"."univ", "GameRoom"."winMetod" FROM "GameRoom" JOIN "User" ON "GameRoom"."visitorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
+    `SELECT "User"."nickname", "User"."univ", "GameRoom"."winMethod" FROM "GameRoom" JOIN "User" ON "GameRoom"."visitorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
   );
   const [asVisitor, dd] = await sequelize.query(
-    `SELECT "User"."nickname", "User"."univ", "GameRoom"."winMetod" FROM "GameRoom" JOIN "User" ON "GameRoom"."creatorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
+    `SELECT "User"."nickname", "User"."univ", "GameRoom"."winMethod" FROM "GameRoom" JOIN "User" ON "GameRoom"."creatorId" = "User"."userId" WHERE "GameRoom"."winnerId" = '${userId}'`
   );
   const mergedArray = [...asCreator, ...asVisitor];
 
