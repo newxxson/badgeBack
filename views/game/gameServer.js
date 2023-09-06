@@ -109,22 +109,26 @@ export default function gameServer(io) {
           socket.emit("joinGame", {
             message: "joining game",
             status: "success",
-            creatorNickname: creator.nickname,
-            creatorUniv: creator.univ,
-            creatorWin: creator.wins,
-            creatorTotal: creator.total,
-            creatirBadge: creator.myBadge,
+            opData: {
+              opNickname: creator.nickname,
+              opUniv: creator.univ,
+              opWin: creator.wins,
+              opTotal: creator.total,
+              opBadge: creator.myBadge,
+            },
           });
           console.log(rooms);
           console.log(roomId);
           const data = {
             message: "player joined the game",
             status: "success",
-            visitorNickname: visitor.nickname,
-            visitorUniv: visitor.univ,
-            visitorWin: visitor.wins,
-            visitorTotal: visitor.total,
-            visitorBadge: visitor.myBadge,
+            opData: {
+              opNickname: visitor.nickname,
+              opUniv: visitor.univ,
+              opWin: visitor.wins,
+              opTotal: visitor.total,
+              opBadge: visitor.myBadge,
+            },
             roomId: roomId,
           };
           broadcast(rooms[roomId], "waiting", data);
