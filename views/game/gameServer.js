@@ -1,3 +1,4 @@
+import e from "express";
 import GameRoom from "../../DataBase/GameRoom.js";
 import Univ from "../../DataBase/Univ.js";
 import User from "../../DataBase/User.js";
@@ -269,9 +270,13 @@ export default function gameServer(io) {
         const data = {
           message: "draw",
           status: "success",
+          winner: "draw",
+          choice: rooms[roomId]["visitorChoice"],
         };
         broadcast(rooms[roomId], "gameResult", data);
-        startGame(roomId);
+        setTimeout(async () => {
+          startGame(roomId);
+        }, 3000);
       }
       const winnerChoice = winner == "creator" ? creatorChoice : visitorChoice;
       broadcast(rooms[roomId], "gameResult", {
@@ -377,6 +382,53 @@ function deactivateRoom(rooms, room) {
 // }
 
 function broadcast(room, subject, data) {
-  room["creator"].emit(subject, data);
-  room["visitor"].emit(subject, data);
+  if (subject == "gameResult") sendGameResult(room, subject, data);
+  else {
+    room["creator"].emit(subject, data);
+    room["visitor"].emit(subject, data);
+  }
+}
+
+function getLosingChoice(choice) {
+  if (choice === "rock") return "scissor";
+  if (choice === "paper") return "rock";
+  if (choice === "scissor") return "paper";
+}
+
+function sendGameResult(room, subject, data) {
+  let creatorChoice, creatorResult;
+  let visitorChoice, visitorResult;
+  if (data.winner === "creator") {
+    creatorResult = "win";
+    creatorChoice = data.winnerChoice;
+    visitorChoice = "lose";
+    visitorChoice = getLosingChoice(creatorChoice);
+  } else if (data.winner == "visitor") {
+    visitorResult = "win";
+    visitorChoice = data.winnerChoice;
+    creatorResult = "lose";
+    creatorChoice = getLosingChoice(visitorChoice);
+  } else {
+    visitorResult = "draw";
+    creatorResult = "draw";
+    visitorChoice = data.choice;
+    creatorChoice = data.choice;
+  }
+  const creatorData = {
+    message: data.message,
+    status: data.status,
+    result: creatorResult,
+    myChoice: creatorChoice,
+    opChoice: visitorChoice,
+  };
+  const visitorData = {
+    message: data.message,
+    status: data.status,
+    result: visitorResult,
+    myChoice: visitorChoice,
+    opChoice: creatorChoice,
+  };
+
+  room["creator"].emit(subject, creatorData);
+  room["visitor"].emit(subject, visitorData);
 }

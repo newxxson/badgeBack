@@ -2,7 +2,6 @@ import User from "../../DataBase/User.js";
 
 export default async function godGame(req, res, userId) {
   try {
-    console.log(req.body);
     const { choice } = req.body;
 
     //check out whether database has user or not

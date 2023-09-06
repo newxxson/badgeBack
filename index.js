@@ -15,9 +15,15 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [
+      "http://127.0.0.1:3000",
+      "http:localhost:3000",
+      "http:localhost:5500",
+      "*",
+    ], // Set your client's origin here
+    methods: ["GET", "POST"],
+    credentials: true,
   },
-  methods: ["GET", "POST"],
 });
 app.use(express.json());
 app.use(cors());
