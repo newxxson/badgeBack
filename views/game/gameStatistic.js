@@ -71,6 +71,7 @@ export async function getRanker(req, res, userId) {
     const rankers = await sequelize.query(
       `SELECT "nickname","univ","getBadge", RANK() OVER (ORDER BY "getBadge" DESC) AS rank
        FROM "User"
+       WHERE "User"."getBadge" > 0
        ORDER BY rank
        LIMIT 20`,
       { type: sequelize.QueryTypes.SELECT }

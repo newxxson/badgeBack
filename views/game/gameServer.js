@@ -1,8 +1,7 @@
-import e from "express";
 import GameRoom from "../../DataBase/GameRoom.js";
 import Univ from "../../DataBase/Univ.js";
 import User from "../../DataBase/User.js";
-import makeQrCode from "./makeQrCode.js";
+import makeQrCode from "./makeQrCode.cjs/";
 
 export default function gameServer(io) {
   const rooms = {};
@@ -24,7 +23,7 @@ export default function gameServer(io) {
           console.log(newRoom);
           socket.join(roomId);
           rooms[roomId] = { creator: socket, readyPlayer: 0 };
-          const qrCode = makeQrCode(roomId);
+          const qrCode = await makeQrCode(roomId);
           socket.emit("createGame", {
             message: "game created",
             status: "success",
