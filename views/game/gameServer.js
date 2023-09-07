@@ -11,7 +11,8 @@ export default function gameServer(io) {
     socket.on("refresh", (data) => {
       const roomId = data.roomId;
       const role = data.role;
-      rooms[roomId][role] = socket;
+      if (role === "creator") rooms[roomId][role] = socket;
+      else rooms[roomId]["visitor"] = socket;
       socket.emit("refresh", { message: "confirmed" });
     });
 
