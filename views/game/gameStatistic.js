@@ -55,7 +55,8 @@ export async function getUnivBadge(req, res) {
       ) / 100;
     res.setHeader("Content-Type", "application/json");
     return res.status(200).json({
-      kuBadgeRatio: kuBadgeRatio,
+      kuBadgeRatio:
+        korea.badgeAmount == 0 && yonsei.badgeAmount == 0 ? kuBadgeRatio : 0.5,
       korea: korea.badgeAmount,
       yonsei: yonsei.badgeAmount,
     });

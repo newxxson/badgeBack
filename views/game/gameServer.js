@@ -134,7 +134,8 @@ export default function gameServer(io) {
           };
           broadcast(rooms[roomId], "waiting", data);
 
-          //auto start after visitor joins
+          await room.save();
+          // auto start after visitor joins
           setTimeout(() => {
             if (rooms[roomId]["readyPlayer"] < 2 && !rooms[roomId]["block"]) {
               rooms[roomId]["block"] = true;
@@ -142,12 +143,10 @@ export default function gameServer(io) {
                 message: "start game",
                 state: "success",
               };
-              broadcast(rooms[roomId], "startGame", data);
+              broadcast(rooms[roomId], "activateGame", data);
               startGame(roomId);
             }
           }, 5500);
-
-          await room.save();
         } else {
           socket.emit("joinGame", {
             message: "Invalid room ID",
@@ -186,7 +185,7 @@ export default function gameServer(io) {
             message: "start game",
             state: "success",
           };
-          broadcast(rooms[roomId], "startGame", data);
+          broadcast(rooms[roomId], "activateGame", data);
           if (!rooms[roomId]["block"]) {
             rooms[roomId]["block"] = true;
             startGame(roomId);
@@ -280,6 +279,8 @@ export default function gameServer(io) {
         broadcast(rooms[roomId], "gameResult", data);
         setTimeout(async () => {
           rooms[roomId]["block"] = false;
+          rooms[roomId]["visitorChoice"] = null;
+          rooms[roomId]["creatorChoice"] = null;
           startGame(roomId);
         }, 3000);
         return;
