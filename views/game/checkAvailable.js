@@ -13,7 +13,12 @@ export default async function checkAvailable(req, res, userId) {
     if (timeInterval > 5 * 60 * 1000) {
       res.status(200).json({ message: "time interval okay", timeInterval });
     } else {
-      res.status(400).json({ message: "too soon", timeInterval });
+      res
+        .status(400)
+        .json({
+          message: "too soon",
+          timeInterval: 5 * 60 * 1000 - timeInterval,
+        });
     }
   } catch (error) {
     console.log("error", error);

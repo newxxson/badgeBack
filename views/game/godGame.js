@@ -15,14 +15,14 @@ export default async function godGame(req, res, userId) {
       res.status(400).json({ message: "too soon", timeInterval });
       return;
     }
-    const gmChoices = ["rock", "paper", "scissors"];
+    const gmChoices = ["rock", "paper", "scissor"];
     const gmChoice = gmChoices[Math.floor(Math.random() * gmChoices.length)];
     //creat gm's random choice
 
     let result = "tie";
     if (
-      (choice === "rock" && gmChoice === "scissors") ||
-      (choice === "scissors" && gmChoice === "paper") ||
+      (choice === "rock" && gmChoice === "scissor") ||
+      (choice === "scissor" && gmChoice === "paper") ||
       (choice === "paper" && gmChoice === "rock")
     ) {
       // User wins
@@ -30,8 +30,8 @@ export default async function godGame(req, res, userId) {
       // Increase the user's badge by three
       user.myBadge += 3;
     } else if (
-      (gmChoice === "rock" && choice === "scissors") ||
-      (gmChoice === "scissors" && choice === "paper") ||
+      (gmChoice === "rock" && choice === "scissor") ||
+      (gmChoice === "scissor" && choice === "paper") ||
       (gmChoice === "paper" && choice === "rock")
     ) {
       // GM wins, or you can handle this separately

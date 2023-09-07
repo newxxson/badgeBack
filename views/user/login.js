@@ -22,7 +22,9 @@ export default async function login(req, res) {
     console.log("logging in", accessToken);
     // Return the token as part of the response
     res.setHeader("Content-Type", "application/json");
-    res.status(200).json({ token: accessToken, message: "login is complete" });
+    res
+      .status(200)
+      .json({ token: accessToken, message: "login is complete", userId });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });

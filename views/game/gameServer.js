@@ -83,6 +83,7 @@ export default function gameServer(io) {
 
         //telling creator to wait
         if (visitorId == null) {
+          console.log("pending");
           io.to(roomId).emit("waiting", {
             message: "player signing up",
             status: "pending",
@@ -278,8 +279,10 @@ export default function gameServer(io) {
         };
         broadcast(rooms[roomId], "gameResult", data);
         setTimeout(async () => {
+          rooms[roomId]["block"] = false;
           startGame(roomId);
         }, 3000);
+        return;
       }
       const winnerChoice = winner == "creator" ? creatorChoice : visitorChoice;
       broadcast(rooms[roomId], "gameResult", {
