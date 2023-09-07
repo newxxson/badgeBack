@@ -7,7 +7,7 @@ import gameServer from "./views/game/gameServer.js";
 import initializeDatabase from "./DataBase/DataBase.js";
 import setGameUrl from "./views/game/urls.js";
 import login from "./views/user/login.js";
-import signup from "./views/user/signup.js";
+import signup from "./views/user/sign.js";
 import { sign } from "crypto";
 import cors from "cors";
 import { authenticateToken } from "./views/user/token.js";
@@ -22,6 +22,7 @@ const io = new Server(server, {
       "http://localhost:3000",
       "http://localhost:5500",
       "http://127.0.0.1:5500",
+      "https://web-badgebadge-jvvy2blm9bs8n9.sel5.cloudtype.app",
       "*",
     ], // Set your client's origin here
     methods: ["GET", "POST"],
