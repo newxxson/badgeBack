@@ -174,13 +174,16 @@ export default function gameServer(io) {
     socket.on("startGame", async (data) => {
       try {
         const roomId = data.roomId;
+        const role = data.role;
         if (
           //check if user and room is valid
           rooms[roomId] &&
           (rooms[roomId]["visitor"].id === socket.id ||
-            rooms[roomId]["creator"].id === socket.id)
+            (rooms[roomId]["creator"].id === socket.id &&
+              !rooms[roomId][role + "ready"]))
         ) {
           rooms[roomId]["readyPlayer"] += 1;
+          rooms[roomId][role + "ready"] = True;
         } else {
           socket.emit("startGame", {
             message: "socket id does not match",
