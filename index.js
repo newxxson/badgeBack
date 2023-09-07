@@ -22,7 +22,7 @@ const io = new Server(server, {
       "http://localhost:3000",
       "http://localhost:5500",
       "http://127.0.0.1:5500",
-      "https://web-badgebadge-jvvy2blm9bs8n9.sel5.cloudtype.app",
+      "https://web-bbadge-jvvy2blm9bs8n9.sel5.cloudtype.app",
       "*",
     ], // Set your client's origin here
     methods: ["GET", "POST"],
