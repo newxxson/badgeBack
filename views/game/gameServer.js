@@ -8,6 +8,13 @@ export default function gameServer(io) {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
+    socket.on("refresh", (data) => {
+      const roomId = data.roomId;
+      const role = data.role;
+      rooms[roomId][role] = socket;
+      socket.emit("refresh", { message: "confirmed" });
+    });
+
     // Create a new game room and notify the creator of game.
     socket.on("createGame", async (data) => {
       try {
@@ -31,6 +38,7 @@ export default function gameServer(io) {
             newRoom: newRoom,
             qrCode: qrCode,
           });
+          return;
         } else {
           socket.emit("createGame", {
             message: "no badge",
